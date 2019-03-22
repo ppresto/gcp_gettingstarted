@@ -1,4 +1,28 @@
 # gcp_gettingstarted
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [gcp_gettingstarted](#gcpgettingstarted)
+- [Create New Project](#create-new-project)
+	- [Name](#name)
+	- [Billing](#billing)
+	- [API's](#apis)
+	- [Cloud Shell](#cloud-shell)
+	- [Create IAM Service Account in your Project](#create-iam-service-account-in-your-project)
+	- [Create Storage Bucket](#create-storage-bucket)
+	- [Access your GCP project in Cloud Shell and set your zone](#access-your-gcp-project-in-cloud-shell-and-set-your-zone)
+- [Setup and Use gcloud containers (Optional)](#setup-and-use-gcloud-containers-optional)
+	- [Pull Image from Dockerhub](#pull-image-from-dockerhub)
+	- [Authentication](#authentication)
+		- [Create initial conatiner](#create-initial-conatiner)
+- [Build Kubernetes](#build-kubernetes)
+	- [Clone the repo](#clone-the-repo)
+	- [Edit install_k8s.sh](#edit-installk8ssh)
+- [Global Variables](#global-variables)
+	- [Build](#build)
+- [Deploy Sentiment Analyzser (3 micro services)](#deploy-sentiment-analyzser-3-micro-services)
+- [K8s Administration Notes](#k8s-administration-notes)
+
+<!-- /TOC -->
 
 # Create New Project
 ## Name
