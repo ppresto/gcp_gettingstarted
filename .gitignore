@@ -10,4 +10,4 @@
 .tfstate
 
 # certificates/credentials
-secrets/*
+*secrets/*
