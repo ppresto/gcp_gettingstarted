@@ -16,7 +16,7 @@ resource "google_container_cluster" "dev1" {
   }
 
   node_config {
-    machine_type = "n1-standard-2"
+    machine_type = "g1-small"
     oauth_scopes = [
       "https://www.googleapis.com/auth/compute",
       "https://www.googleapis.com/auth/devstorage.read_only",
