@@ -31,7 +31,7 @@ if [[ ${status} == "Running" ]]; then
   echo "Login as Admin with : $(kubectl get secret cd-jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode)"
   echo "Jenkins will be available at: http://localhost:8081"
   kubectl port-forward $POD_NAME 8081:8080 >/dev/null &
-else
+  else
   echo "Status: ${status}"
   echo "No Pod available, Not setting port-forwarding"
 fi

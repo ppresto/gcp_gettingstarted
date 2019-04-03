@@ -1,7 +1,15 @@
-# gcp_gettingstarted
+# Getting Started in GCP
+
+* Create/Destroy your GKE cluster using Terraform storing tfstate in Google Storage.
+* Install Helm
+* Install stable/jenkins using Helm
+* Configure Jenkins Job for CI/CD using GKE
+* Promote and Deploy new code from Dev to Prod using a Canary deployment first
+
+
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
-- [gcp_gettingstarted](#gcpgettingstarted)
+- [Getting Started in GCP](#getting-started-in-gcp)
 - [Create New Project](#create-new-project)
 	- [Name](#name)
 	- [Billing](#billing)
@@ -19,8 +27,17 @@
 	- [Edit install_k8s.sh](#edit-installk8ssh)
 - [Global Variables](#global-variables)
 	- [Build](#build)
-- [Deploy Sentiment Analyzser (3 micro services)](#deploy-sentiment-analyzser-3-micro-services)
-- [K8s Administration Notes](#k8s-administration-notes)
+- [Deploy gceme](#deploy-gceme)
+	- [Clone example app and Deploy to GKE](#clone-example-app-and-deploy-to-gke)
+	- [Create Cloud Source Repo](#create-cloud-source-repo)
+	- [Setup Jenkins](#setup-jenkins)
+	- [Deploy changes](#deploy-changes)
+- [K8s Admin Cheatsheet](#k8s-admin-cheatsheet)
+	- [Helm](#helm)
+	- [Pods](#pods)
+	- [Networking](#networking)
+	- [Resources](#resources)
+- [References](#references)
 
 <!-- /TOC -->
 
@@ -112,6 +129,134 @@ Stages:
 1. terraform init will download dependencies and setup your state file.
 2. terraform plan will execute to show you what will be built.  You have 5 secs to Ctrl+c
 3. terraform apply will build your k8s cluster with a default pool
+4. terraform show will show you whats built.
 
-# Deploy Sentiment Analyzser (3 micro services)
-# K8s Administration Notes
+# Deploy gceme
+## Clone example app and Deploy to GKE
+```
+git clone https://github.com/GoogleCloudPlatform/continuous-deployment-on-kubernetes
+cd continuous-deployment-on-kubernetes/sample-app
+```
+1. Create production namespace to logically separate it
+`kubectl create ns production`
+2. Create deployments and services
+```
+kubectl --namespace=production apply -f k8s/production
+kubectl --namespace=production apply -f k8s/canary
+kubectl --namespace=production apply -f k8s/services
+```
+3. Scale up front-ends
+`kubectl --namespace=production scale deployment gceme-frontend-production --replicas=4`
+4. Get external IP (can take a long time), and store in variable
+```
+kubectl --namespace=production get service gceme-frontend
+export FRONTEND_SERVICE_IP=$(kubectl get -o jsonpath="{.status.loadBalancer.ingress[0].ip}"  --namespace=production services gceme-frontend)
+```
+5. Open new window and poll endpoint /version to see rolling updates after deployment to canary
+`while true; do curl http://$FRONTEND_SERVICE_IP/version; sleep 1;  done`
+
+## Create Cloud Source Repo
+1. cd ~/continuous-deployment-on-kubernetes/sample-app
+2. create repo
+`gcloud source repos create gceme`
+3. configure git
+```
+git init
+git config credential.helper gcloud.sh
+export PROJECT_ID=$(gcloud config get-value project)
+git remote add origin https://source.developers.google.com/p/$PROJECT_ID/r/gceme
+git config --global user.email "pgpresto@gmail.com"
+git config --global user.name "Patrick Presto"
+git add .
+git commit -m "Initial commit"
+git push origin master
+```
+
+## Setup Jenkins
+1. Add Global Credentials of type: Google Service Account from metadata
+2. Create multipipeline job named “sample-app"
+    1. Add Source: Git
+        1. repo: https://source.developers.google.com/p/${PROJECT_ID}/r/gceme
+        2. enable the service account credentials we just created
+    2. Scan Multibranch pipeline Triggers:  Check Periodically if not otherwise ran, set 1 min interval.
+    3. Keep old items 1 day to have build log history for easy troubleshooting
+    4. save
+    5. Pipeline runs, discovers master branch.  If this fails review Jenkinsfile details for proper project and repo locations.
+
+## Deploy changes
+3. Update repo with canary branch and create version 2.
+`git checkout -b canary`
+    2. vi Jenkinsfile and update project value
+    3. vi html.go and update 2 cases of blue with orange
+    4. vi main.go and change version to 2.0.0
+```
+git add .
+git commit -m “version 2"
+git push origin canary
+```
+4. Get Status
+    1. Review Jenkins pipeline and console output
+    2. Look at the polling /version window and see the canary deployment
+5. Push to Master
+Review status, pods, replicas, deployment, and app functionality before final push to master.
+```
+git checkout master
+git merge canary
+git push origin master
+```
+6. Poll production URL
+```
+export FRONTEND_SERVICE_IP=$(kubectl get -o jsonpath="{.status.loadBalancer.ingress[0].ip}" --namespace=production services gceme-frontend)
+
+while true; do curl http://$FRONTEND_SERVICE_IP/version; sleep 1;  done
+```
+
+REF: https://cloud.google.com/solutions/continuous-delivery-jenkins-kubernetes-engine
+
+# K8s Admin Cheatsheet
+## Helm
+* helm del --purge <NAME>
+## Pods
+Get logs, events, and other information
+```
+kubectl logs <POD_NAME>
+kubectl logs <POD_NAME> -c <CONTAINER_NAME>
+kubectl describe pod <POD_NAME>
+kubectl get events
+kubectl get endpoints
+kubectl get pods --all-namespaces -o yaml
+kubectl get pods --all-namespaces --show-labels
+kubectl get pods --all-namespaces -o=jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{range .spec.containers[*]}{.image}{", "}{end}{end}’ | sort
+kubectl get pods --all-namespaces -o=jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{range .spec.containers[*]}{.name}{", "}{end}{end}' | sort
+```
+Run commands in Pods.  Start of pod name is usualy container name.
+```
+kubectl run -it --rm --restart=Never busybox --image=busybox sh
+kubectl exec sa-frontend-5769ff78c4-sgfvz -c sa-frontend -- bash
+
+```
+
+## Networking
+* Use curl
+`kubectl run client --image=appropriate/curl --rm -ti --restart=Never --command -- curl http://my-service:80`
+* Use nslookup
+`kubectl run busybox --image=busybox --rm -ti --restart=Never --command -- nslookup my-service`
+* Forward Container port to localhost
+`kubectl port-forward <POD_NAME> <POD_PORT>`
+* Check K8s API
+```
+kubectl run curl --image=appropriate/curl --rm -ti --restart=Never --command -- sh -c 'KUBE_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) && curl -sSk -H "Authorization: Bearer $KUBE_TOKEN" \
+https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/api/v1/namespaces/default/pods'
+```
+
+## Resources
+* Resize node pool by getting cluster name, node-pool name and running resize
+```
+gcloud container clusters list
+glcoud container node-pools list --cluster CLUSTER_NAME
+gcloud container clusters resize CLUSTER_NAME --node-pool NODE_POOL --size 4
+```
+# References
+* https://cloud.google.com/solutions/jenkins-on-kubernetes-engine
+* https://youtu.be/IDoRWieTcMc
+* https://cloud.google.com/solutions/jenkins-on-kubernetes-engine-tutorial

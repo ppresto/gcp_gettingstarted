@@ -7,19 +7,19 @@ Master:
     - git:3.9.3
     - google-oauth-plugin:0.7
     - google-source-plugin:0.3
-  Cpu: "400m"
-  Memory: "512Mi"
-  JavaOpts: "-Xms512m -Xmx512m"
+  Cpu: "1"
+  Memory: "3500Mi"
+  JavaOpts: "-Xms3500m -Xmx3500m"
   ServiceType: ClusterIP
 Agent:
   Enabled: true
   resources:
     requests:
-      cpu: "100m"
+      cpu: "500m"
       memory: "256Mi"
     limits:
-      cpu: "100m"
-      memory: "256Mi"
+      cpu: "1"
+      memory: "512Mi"
 Persistence:
   Size: 100Gi
 NetworkPolicy:
