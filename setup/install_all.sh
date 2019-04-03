@@ -49,8 +49,8 @@ terraform apply -auto-approve \
 # Install helm, k8s tiller service account and bindings
 cd ${DIRECTORY}
 ./install_helm.sh
-echo "sleeping 5 sec"
-sleep 10
+echo "sleeping 30 sec"
+sleep 30
 
 # Install stable/jenkins helm chart
 ./install_jenkins.sh
