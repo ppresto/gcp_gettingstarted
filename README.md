@@ -1,5 +1,7 @@
 # Getting Started in GCP
 
+Need a free K8s environment for personal development and training?  By using the initial $300 GCP offers + terraform to build/destroy GKE daily and terraforms local-exec to run a couple simple scripts (install helm and jenkins) I can have my env ready for me in 10 minutes and run it > 1 year.  This Repo walks you through how to do this yourself with useful references below.
+## Overview
 * Create/Destroy your GKE cluster using Terraform storing tfstate in Google Storage.
 * Install Helm
 * Install stable/jenkins using Helm
@@ -10,6 +12,7 @@
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
 - [Getting Started in GCP](#getting-started-in-gcp)
+	- [Overview](#overview)
 - [Create New Project](#create-new-project)
 	- [Name](#name)
 	- [Billing](#billing)
