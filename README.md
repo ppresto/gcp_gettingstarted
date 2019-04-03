@@ -1,5 +1,5 @@
 # Need a Free K8s Env for personal development?
-By using the initial $300 GCP offers + terraform to build/destroy GKE daily along with a couple simple scripts (install helm and jenkins) I can have my GKE Env ready for me with 1 command in 10 minutes and run it for over 1 year.  This is a tutorial covering the steps I've taken to build my development and includes a GCP sample app.
+By using the initial $300 GCP offers + terraform to build/destroy GKE daily along with a couple simple scripts (install helm and jenkins) I can have my GKE Env ready for me with 1 command in 10 minutes and run it for over 1 year.  This is a tutorial covering the steps I've taken to build my development GKE clustert and includes a CI/CD example Jenkinsfile and app that can deploy to a canary then full env for any branch.
 
 ## Highlights
 * Run local container to manage your GCP Project (auth only first time not subsequent runs)
