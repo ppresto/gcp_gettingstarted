@@ -1,0 +1,10 @@
+{
+    "variable": {
+        "hostname": {
+            "default": "hostname"
+        },
+        "product": {
+            "default": "mymicroservice"
+        }
+    }
+}
